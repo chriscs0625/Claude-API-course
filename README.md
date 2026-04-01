@@ -2,7 +2,7 @@
 
 An interactive, single-file HTML course application covering the core concepts of the Anthropic Claude API. Redesigned with a modern, Apple-like glassmorphism UI, real-time dark/light mode, and fluid GSAP scroll animations.
 
-🚀 **[Live Demo on Cloudflare Pages](https://chris-claude-api.pages.dev)** *(Update this link to your new Option 2 URL!)*
+🚀 **[Live Demo on Cloudflare Pages](https://claude-api-course-7ke.pages.dev)**
 
 ## ✨ Features
 - **Minimalist Glassmorphism UI**: Clean, distraction-free reading experience using frosted glass effects.
