@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude API — Interactive Course</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0a0f;--surface:#111118;--surface2:#18181f;--border:#2a2a3a;--accent:#7c6af7;--accent2:#f7c26a;--accent3:#6af7c2;--text:#e8e8f0;--muted:#7a7a90;--danger:#f76a6a;--tag-bg:#1e1e2e;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,106,247,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  header{position:relative;z-index:10;padding:48px 32px 32px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(124,106,247,.07) 0%,transparent 100%);}
+  .hi{max-width:1100px;margin:0 auto;}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:12px;}
+  h1{font-size:clamp(28px,5vw,52px);font-weight:800;line-height:1.1;background:linear-gradient(135deg,#fff 30%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px;}
+  .sub{font-size:15px;color:var(--muted);max-width:540px;line-height:1.6;}
+  .stats{display:flex;gap:24px;margin-top:28px;flex-wrap:wrap;}
+  .stat{display:flex;align-items:center;gap:8px;font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+  .dot.y{background:var(--accent2);}.dot.g{background:var(--accent3);}
+  .pw{margin-top:16px;}
+  .pl{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;}
+  .pb{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .pf{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:2px;width:0%;transition:width .4s ease;}
+  .ctrl{position:sticky;top:0;z-index:20;background:rgba(10,10,15,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 32px;}
+  .ci{max-width:1100px;margin:0 auto;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  .sw{position:relative;flex:1;min-width:200px;}
+  .si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+  input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px 9px 36px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;}
+  input:focus{border-color:var(--accent);}
+  input::placeholder{color:var(--muted);}
+  .fbs{display:flex;gap:6px;flex-wrap:wrap;}
+  .fb{padding:7px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap;}
+  .fb:hover{border-color:var(--accent);color:var(--text);}
+  .fb.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .main{position:relative;z-index:5;max-width:1100px;margin:0 auto;padding:32px 32px 80px;}
+  .slbl{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin:32px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .slbl::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);}
+  .cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;position:relative;}
+  .card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 32px rgba(124,106,247,.15);}
+  .card.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 8px 32px rgba(124,106,247,.2);}
+  .cab{height:3px;width:100%;}
+  .ch{padding:18px 18px 12px;display:flex;align-items:flex-start;gap:12px;}
+  .ci2{font-size:22px;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--surface2);}
+  .ct{font-size:14px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:4px;}
+  .cp{font-size:12px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .ctags{padding:0 18px 14px;display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--tag-bg);color:var(--muted);border:1px solid var(--border);}
+  .tag.p{color:var(--accent);border-color:rgba(124,106,247,.3);}
+  .tag.y{color:var(--accent2);border-color:rgba(247,194,106,.3);}
+  .tag.g{color:var(--accent3);border-color:rgba(106,247,194,.3);}
+  .tag.r{color:var(--danger);border-color:rgba(247,106,106,.3);}
+  .hint{position:absolute;bottom:14px;right:16px;font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;opacity:0;transition:opacity .2s;}
+  .card:hover .hint{opacity:1;}
+  .card.vis::after{content:'✓';position:absolute;top:10px;right:12px;font-size:11px;color:var(--accent3);}
+  .dp{display:none;grid-column:1/-1;background:var(--surface2);border:1px solid var(--accent);border-radius:12px;padding:28px;animation:sd .25s ease;}
+  .dp.show{display:block;}
+  @keyframes sd{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .dh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+  .dtitle{font-size:20px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:10px;}
+  .xbtn{background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;padding:6px 12px;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;transition:all .15s;}
+  .xbtn:hover{border-color:var(--danger);color:var(--danger);}
+  .db{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .dst{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .dtxt{font-size:13px;color:#c0c0d8;line-height:1.75;}
+  .dlist{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .dlist li{font-size:13px;color:#c0c0d8;padding-left:18px;position:relative;line-height:1.6;}
+  .dlist li::before{content:'→';position:absolute;left:0;color:var(--accent);font-size:11px;}
+  .cblk{background:#0d0d14;border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:'Space Mono',monospace;font-size:11px;color:#a8d8b0;line-height:1.7;overflow-x:auto;margin-top:8px;white-space:pre;}
+  .tip{background:rgba(124,106,247,.08);border:1px solid rgba(124,106,247,.25);border-radius:8px;padding:12px 14px;margin-top:12px;font-size:12px;color:#b0a8f0;line-height:1.6;}
+  .tip strong{color:var(--accent);}
+  .fsteps{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+  .fstep{display:flex;gap:12px;align-items:flex-start;}
+  .snum{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .stxt{font-size:13px;color:#c0c0d8;line-height:1.55;}
+  .nr{text-align:center;padding:60px 20px;color:var(--muted);font-family:'Space Mono',monospace;font-size:13px;display:none;}
+  @media(max-width:700px){.db{grid-template-columns:1fr;}}
+  @media(max-width:600px){header,.main{padding-left:16px;padding-right:16px;}.ctrl{padding:12px 16px;}.cg{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hi">
+    <div class="eyebrow">// Interactive Course Notes</div>
+    <h1>Working with the Claude API</h1>
+    <p class="sub">Every concept from the video course. Tap any card to go deep. Search, filter by section, and track what you have explored.</p>
+    <div class="stats">
+      <div class="stat"><div class="dot"></div><span id="tc">38 topics</span></div>
+      <div class="stat"><div class="dot y"></div><span id="vc">0 explored</span></div>
+      <div class="stat"><div class="dot g"></div><span id="fc">all visible</span></div>
+    </div>
+    <div class="pw">
+      <div class="pl"><span>EXPLORATION PROGRESS</span><span id="pp">0%</span></div>
+      <div class="pb"><div class="pf" id="pf"></div></div>
+    </div>
+  </div>
+</header>
+<div class="ctrl">
+  <div class="ci">
+    <div class="sw">
+      <span class="si">&#x2315;</span>
+      <input type="text" id="search" placeholder="Search topics, keywords..." oninput="fc2()">
+    </div>
+    <div class="fbs">
+      <button class="fb on" onclick="sf('all',this)">All</button>
+      <button class="fb" onclick="sf('basics',this)">&#x1F50C; Basics</button>
+      <button class="fb" onclick="sf('prompting',this)">&#x270D; Prompting</button>
+      <button class="fb" onclick="sf('tools',this)">&#x1F527; Tools &amp; MCP</button>
+      <button class="fb" onclick="sf('advanced',this)">&#x26A1; Advanced</button>
+      <button class="fb" onclick="sf('rag',this)">&#x1F4DA; RAG</button>
+      <button class="fb" onclick="sf('agents',this)">&#x1F916; Agents</button>
+    </div>
+  </div>
+</div>
+<div class="main" id="mc">
+  <div class="nr" id="nr">No topics match your search &#x1F50D;</div>
+</div>
+
+<script>
+var D=[
+{id:1,cat:"basics",ic:"&#x1F9E0;",col:"linear-gradient(90deg,#7c6af7,#a06af7)",ti:"Claude Model Families",
+ pv:"Opus, Sonnet, Haiku &mdash; how to pick the right one for the job.",
+ tgs:[{t:"core",s:"p"},{t:"models",s:""}],
+ tl:"Three models, three trade-offs: intelligence vs speed vs cost.",
+ wh:"Claude has three families: <strong>Opus</strong> (smartest, slowest), <strong>Sonnet</strong> (balanced workhorse), and <strong>Haiku</strong> (fastest, cheapest, no deep reasoning).",
+ wy:"Not every task needs maximum intelligence. Routing classification to Haiku and complex reasoning to Opus saves cost and latency.",
+ pts:["Opus &rarr; deep reasoning, multi-step planning, complex research","Sonnet &rarr; coding, practical tasks, most production use cases","Haiku &rarr; real-time chat, high-volume pipelines","Best practice: use multiple models in one app based on task"],
+ tp:"<strong>Analogy:</strong> Haiku is your fast receptionist, Sonnet is your reliable engineer, Opus is your senior consultant.",
+ cd:null,st:null},
+
+{id:2,cat:"basics",ic:"&#x1F50C;",col:"linear-gradient(90deg,#6af7c2,#6ab0f7)",ti:"Accessing the API",
+ pv:"The 5-step flow from user input to response on screen.",
+ tgs:[{t:"core",s:"g"},{t:"architecture",s:""}],
+ tl:"Never call Anthropic directly from the client. Always proxy through your server to protect your API key.",
+ wh:"Every request: Client &rarr; Your Server &rarr; Anthropic API &rarr; Generation &rarr; Response back. Always through your server.",
+ wy:"If you called the API client-side, anyone could steal your key from the network tab.",
+ pts:["Step 1: Client sends text to YOUR server (never Anthropic directly)","Step 2: Server makes request using SDK or HTTP","Step 3: Tokenize &rarr; Embed &rarr; Contextualize &rarr; Generate","Step 4: Stops at max_tokens OR end-of-sequence token","Step 5: API returns text + usage counts + stop_reason"],
+ tp:"<strong>Key terms:</strong> Token = word/part chunk. Embedding = numbers representing meaning. max_tokens = generation length cap.",
+ cd:null,st:null},
+
+{id:3,cat:"basics",ic:"&#x1F4E1;",col:"linear-gradient(90deg,#f7c26a,#f76a6a)",ti:"Making a Request",
+ pv:"client.messages.create() &mdash; the 4 required parameters and response structure.",
+ tgs:[{t:"code",s:"y"},{t:"sdk",s:""}],
+ tl:"4 required args: model, max_tokens, messages. Access response via message.content[0].text.",
+ wh:"Create an Anthropic client and call client.messages.create() with model name, max_tokens cap, and messages list.",
+ wy:"max_tokens is a SAFETY CAP, not a target length. Set it high enough so responses are never cut off.",
+ pts:["Install: pip install anthropic python-dotenv","Store API key in .env file, never hardcode it","Messages = list of dicts: role and content"],
+ tp:null,
+ cd:"client = anthropic.Anthropic()\n\nmessage = client.messages.create(\n  model=\"claude-sonnet-4-20250514\",\n  max_tokens=1000,\n  messages=[\n    {\"role\": \"user\",\n     \"content\": \"What is quantum computing?\"}\n  ]\n)\n\nprint(message.content[0].text)",
+ st:null},
+
+{id:4,cat:"basics",ic:"&#x1F4AC;",col:"linear-gradient(90deg,#a06af7,#6af7c2)",ti:"Multi-Turn Conversations",
+ pv:"The API has NO memory. You must manually send the full history every time.",
+ tgs:[{t:"stateful",s:"p"},{t:"history",s:""}],
+ tl:"Claude forgets everything between requests. Fix this by keeping a messages list and appending before every call.",
+ wh:"Each API call is completely stateless. You maintain a list of message dicts and send the ENTIRE list with every request.",
+ wy:"Without history Claude has no context. With full history it maintains conversation across many turns.",
+ pts:["add_user_message(messages, text) &rarr; append user turn","add_assistant_message(messages, text) &rarr; append reply","chat(messages) &rarr; sends full history, returns response","Append each reply before asking the next question"],
+ tp:"<strong>Analogy:</strong> Like emailing someone with zero memory. You paste the entire chain at the top of every new message.",
+ cd:"messages = []\n\nmessages.append({\"role\": \"user\", \"content\": \"Hi!\"})\nreply = chat(messages)\nmessages.append({\"role\": \"assistant\", \"content\": reply})\n\n# Turn 2 - full history sent again\nmessages.append({\"role\": \"user\", \"content\": \"What did I just say?\"})",
+ st:null},
+
+{id:5,cat:"prompting",ic:"&#x1F3AD;",col:"linear-gradient(90deg,#f76a6a,#f7c26a)",ti:"System Prompts",
+ pv:"Control HOW Claude responds, not what it knows. Assign roles and behaviors.",
+ tgs:[{t:"prompting",s:"y"},{t:"behavior",s:""}],
+ tl:"System prompts control Claude's style and role. Pass as system= keyword arg. First line = role assignment.",
+ wh:"A system prompt is a plain string via system= that sets Claude's persona and behavioral rules before any user message.",
+ wy:"Same question, different system prompt = completely different treatment. A math tutor prompt makes Claude give hints instead of direct answers.",
+ pts:["First line: 'You are a [role]...'","Guides response APPROACH, not content","Handle None case by excluding system param entirely","Use ** unpacking: client.messages.create(**params)"],
+ tp:"<strong>Analogy:</strong> A job briefing before a customer call. Does not change what the customer asks, changes how the employee handles it.",
+ cd:"params = {\n  \"model\": model,\n  \"max_tokens\": 1000,\n  \"messages\": messages\n}\n\nif system_prompt:\n  params[\"system\"] = system_prompt\n\nresponse = client.messages.create(**params)",
+ st:null},
+
+{id:6,cat:"prompting",ic:"&#x1F321;",col:"linear-gradient(90deg,#f7c26a,#6af7c2)",ti:"Temperature",
+ pv:"0 = deterministic. 1 = creative. Know when to use each.",
+ tgs:[{t:"parameter",s:"y"},{t:"creativity",s:""}],
+ tl:"Temperature (0-1) controls randomness. Low = consistent. High = creative.",
+ wh:"Temperature adjusts next-token probability distribution. At 0, Claude always picks the highest-probability token.",
+ wy:"Data extraction needs consistency, use 0. Brainstorming and marketing copy need variety, use near 1.",
+ pts:["Temperature 0 &rarr; same output every run (deterministic)","Temperature 0.7-1.0 &rarr; varied, creative, unpredictable","Higher temp = more variety, not guaranteed difference","Add temperature= to any messages.create() call"],
+ tp:"<strong>Analogy:</strong> A radio dial. At 0 you are locked to one station. Turn it up and you drift through different stations.",
+ cd:null,st:null},
+
+{id:7,cat:"advanced",ic:"&#x26A1;",col:"linear-gradient(90deg,#6af7c2,#a06af7)",ti:"Response Streaming",
+ pv:"Show text chunk-by-chunk as it generates. No more waiting 10-30 seconds.",
+ tgs:[{t:"ux",s:"g"},{t:"streaming",s:""}],
+ tl:"Streaming sends chunks to user as generated. Use client.messages.stream() with text_stream for the easy path.",
+ wh:"Instead of waiting for the full response, the server streams events and you forward each chunk to the frontend.",
+ wy:"AI responses take time. A spinner for 20 seconds kills UX. Streaming makes the app feel responsive.",
+ pts:["Events: message_start &rarr; content_block_start &rarr; content_block_delta &rarr; stop","content_block_delta = the actual text chunks","stream.get_final_message() assembles full message for storage","Simplified: use client.messages.stream() + text_stream property"],
+ tp:"<strong>Always capture</strong> the final assembled message for database storage, even when streaming.",
+ cd:"with client.messages.stream(\n  model=model,\n  max_tokens=1000,\n  messages=messages\n) as stream:\n  for text in stream.text_stream:\n    print(text, end=\"\", flush=True)\n\nfinal = stream.get_final_message()",
+ st:null},
+
+{id:8,cat:"advanced",ic:"&#x1F39B;",col:"linear-gradient(90deg,#f76a6a,#a06af7)",ti:"Pre-filling & Stop Sequences",
+ pv:"Steer output by injecting a partial assistant message. Stop at any string.",
+ tgs:[{t:"control",s:"r"},{t:"output",s:""}],
+ tl:"Pre-fill: add partial assistant message to steer direction. Stop sequences: halt generation when specific string appears.",
+ wh:"Pre-filling adds an assistant message at the end of history. Claude treats this as text it already wrote and continues from it.",
+ wy:"Together these let you extract CLEAN structured data with no markdown wrappers, no preamble.",
+ pts:["Pre-fill: append {role:'assistant', content:'...'} to messages","Claude continues from the exact end of pre-fill text","Stop sequence: model stops BEFORE including the stop string","Use ', five' instead of 'five' for clean punctuation cuts"],
+ tp:"<strong>Best use case:</strong> Wrap JSON extraction with opening fence as pre-fill and closing fence as stop sequence. Claude returns ONLY the JSON.",
+ cd:"# Pre-fill example\nmessages = [\n  {\"role\": \"user\",   \"content\": \"Coffee vs tea?\"},\n  {\"role\": \"assistant\", \"content\": \"Coffee is better because\"}\n]\n# Claude continues: ...it has more caffeine...\n\n# Stop sequence\nclient.messages.create(\n  ...,\n  stop_sequences=[\"five\"]\n)",
+ st:null},
+
+{id:9,cat:"advanced",ic:"&#x1F4E6;",col:"linear-gradient(90deg,#6af7c2,#f7c26a)",ti:"Structured Data Output",
+ pv:"Get raw JSON/code with no markdown wrappers using pre-fill + stop sequences.",
+ tgs:[{t:"json",s:"g"},{t:"parsing",s:""}],
+ tl:"Pre-fill with opening code fence + stop at closing fence = Claude returns only the JSON. Works for any structured format.",
+ wh:"Claude naturally adds markdown headers and commentary around JSON. Pre-filling removes all that noise.",
+ wy:"You want output that can be directly passed to JSON.parse() without manual cleanup.",
+ pts:["Pre-fill with the opening json fence marker","Stop sequence set to the closing fence marker","Works for Python, regex, XML, any structured format","Result: zero commentary, copy-pasteable output"],
+ tp:"<strong>Why it works:</strong> Claude thinks it already started the JSON block. It only generates what comes after, then stops at the closing fence.",
+ cd:"messages = [\n  {\"role\": \"user\",\n   \"content\": \"List 3 planets as JSON\"},\n  {\"role\": \"assistant\",\n   \"content\": \"```json\"}\n]\n\nresponse = client.messages.create(\n  ...,\n  messages=messages,\n  stop_sequences=[\"```\"]\n)\n# Output: pure JSON, no wrappers",
+ st:null},
+
+{id:10,cat:"prompting",ic:"&#x1F4CA;",col:"linear-gradient(90deg,#a06af7,#f76a6a)",ti:"Prompt Evaluation",
+ pv:"Never deploy after 2 tests. Use automated eval pipelines for objective scoring.",
+ tgs:[{t:"evals",s:"p"},{t:"testing",s:""}],
+ tl:"Treat prompt quality like code quality. Measure it objectively with a pipeline, not gut feelings.",
+ wh:"Prompt evaluation is automated testing using objective metrics. Create test datasets, run through Claude, grade outputs on 1-10 scale.",
+ wy:"Engineers routinely under-test prompts. Without evals you cannot measure whether a change improved things.",
+ pts:["Trap 1: Test once, deploy &rarr; do not do this","Trap 2: Test with 2-3 hand-picked inputs &rarr; still not enough","Right approach: eval pipeline with objective scoring","Enables A/B comparison between prompt versions"],
+ tp:"<strong>Analogy:</strong> Writing a prompt without evals is like shipping code without tests.",
+ cd:null,st:null},
+
+{id:11,cat:"prompting",ic:"&#x1F5C3;",col:"linear-gradient(90deg,#f7c26a,#f76a6a)",ti:"Eval Workflow",
+ pv:"6-step cycle: draft, dataset, variations, responses, grade, iterate.",
+ tgs:[{t:"evals",s:"y"},{t:"pipeline",s:""}],
+ tl:"6 steps: write prompt, build dataset, generate variations, get responses, grade, iterate.",
+ wh:"The eval workflow is an iterative loop. Each cycle gives an objective score telling you whether your change is better or worse.",
+ wy:"Without this loop, prompt improvement is guesswork. With it you are doing data-driven engineering.",
+ pts:null,tp:null,cd:null,
+ st:["Write initial prompt draft as your baseline","Create evaluation dataset (3 to thousands of inputs)","Generate prompt variations by interpolating each test input","Feed each variation to Claude, collect all outputs","Grade each response 1-10, compute average score","Modify prompt based on low scores and repeat cycle"]},
+
+{id:12,cat:"prompting",ic:"&#x1F916;",col:"linear-gradient(90deg,#6af7c2,#6ab0f7)",ti:"Model-Based Grading",
+ pv:"Use Claude to grade Claude. Flexible, automated, surprisingly reliable.",
+ tgs:[{t:"grading",s:"g"},{t:"evals",s:""}],
+ tl:"Ask Claude to evaluate another Claude output. Request strengths + weaknesses + score (not just score) to avoid middling responses.",
+ wh:"Model-based grading uses a second LLM call to evaluate the first LLM output. You pass the output plus a rubric and Claude returns a structured score.",
+ wy:"Human grading is accurate but slow. Code-based grading only works for exact formats. Model grading handles nuanced quality at scale.",
+ pts:["Always request: strengths, weaknesses, reasoning, THEN score","Asking for score-only &rarr; Claude defaults to middling numbers","Use pre-fill + stop sequences to extract structured JSON scores","Average scores across all test cases for final metric"],
+ tp:"<strong>Limitation:</strong> Model graders can be inconsistent. But they provide an objective baseline far better than manual spot-checking.",
+ cd:null,st:null},
+
+{id:13,cat:"prompting",ic:"&#x2705;",col:"linear-gradient(90deg,#6ab0f7,#a06af7)",ti:"Code-Based Grading",
+ pv:"Parse JSON, validate Python AST, compile regex. Hard pass/fail scoring.",
+ tgs:[{t:"grading",s:"p"},{t:"validation",s:""}],
+ tl:"For structured outputs, validate syntactically: JSON parse returns 10 or 0. Combine with model score for final grade.",
+ wh:"Code-based graders validate technical correctness of structured outputs. They return binary scores and can be combined with model graders.",
+ wy:"A model grader might rate badly-formatted JSON as 7/10. A code grader catches this with zero ambiguity.",
+ pts:["validate_json() &rarr; tries JSON.parse, returns 10 or 0","validate_python() &rarr; tries AST parse, returns 10 or 0","validate_regex() &rarr; tries regex compile, returns 10 or 0","final_score = (model_score + syntax_score) / 2"],
+ tp:"<strong>Requirement:</strong> Test dataset must include a format key so the system knows which validator to apply.",
+ cd:null,st:null},
+
+{id:14,cat:"prompting",ic:"&#x270D;",col:"linear-gradient(90deg,#f76a6a,#f7c26a)",ti:"Prompt Engineering Basics",
+ pv:"Be clear, be specific, use XML tags, provide examples. In that order.",
+ tgs:[{t:"prompting",s:"y"},{t:"technique",s:""}],
+ tl:"4 core techniques stack on each other: clear + specific + XML structure + examples. Each measurably improves scores.",
+ wh:"Prompt engineering is a systematic set of techniques. Each technique builds on the previous, giving incremental measurable gains.",
+ wy:"A vague prompt leaves too much interpretation to the model. Each technique constrains output toward what you actually want.",
+ pts:["Clarity: action verb + task + output spec on line 1","Specificity: add Type A (attributes) and Type B (steps)","Structure: wrap injected content in XML tags","Examples: one-shot/multi-shot with ideal output + explanation"],
+ tp:"<strong>Real data:</strong> Basic prompt scored 2.32. Adding clarity &rarr; 3.92. Adding specifics &rarr; 7.86. Each technique has measurable impact.",
+ cd:null,st:null},
+
+{id:15,cat:"prompting",ic:"&#x1F3AF;",col:"linear-gradient(90deg,#a06af7,#6af7c2)",ti:"Being Clear & Direct",
+ pv:"Action verb on line 1. State the task. Specify the output. That is the formula.",
+ tgs:[{t:"clarity",s:"p"},{t:"prompting",s:""}],
+ tl:"Line 1 is everything. Start with a verb, state the exact task, describe expected output format immediately.",
+ wh:"The first line of a prompt is the most critical. It sets direction for everything that follows.",
+ wy:"Models are next-token predictors. A clear first line biases all subsequent generation toward the right output space.",
+ pts:["'Write three paragraphs about X' &rarr; better than 'Tell me about X'","'Identify 3 countries, include stats for each' &rarr; very clear","Format = Action verb + task description + output expectations","Score improved from 2.32 to 3.92 with clarity alone"],
+ tp:null,cd:null,st:null},
+
+{id:16,cat:"prompting",ic:"&#x1F4D0;",col:"linear-gradient(90deg,#f7c26a,#a06af7)",ti:"XML Tags in Prompts",
+ pv:"Wrap injected content in XML tags so Claude knows where your data starts and ends.",
+ tgs:[{t:"structure",s:"y"},{t:"prompting",s:""}],
+ tl:"Use descriptive XML tags to separate different types of content. Helps Claude distinguish instructions from data.",
+ wh:"When you interpolate external data, XML tags tell Claude 'this is user data' vs 'this is my instruction'.",
+ wy:"As prompts get longer Claude can lose track of what is instruction vs input. XML tags make boundaries unambiguous.",
+ pts:["Wrap data: sales_records tags around sales data","Use descriptive names: my_code, athlete_information, docs","Even short injected values benefit from tags","Makes prompt structure obvious to the model"],
+ tp:"<strong>Good tag name:</strong> sales_records not data. The name itself gives context about what is inside.",
+ cd:"Analyze the following code and fix any bugs:\n\n<my_code>\ndef add(a, b):\n  return a - b  # bug!\n</my_code>\n\n<docs>\nThe add function should return the sum.\n</docs>",
+ st:null},
+
+{id:17,cat:"tools",ic:"&#x1F527;",col:"linear-gradient(90deg,#6af7c2,#f7c26a)",ti:"Introducing Tool Use",
+ pv:"Give Claude eyes beyond its training data. Fetch live info on demand.",
+ tgs:[{t:"tools",s:"g"},{t:"realtime",s:""}],
+ tl:"Tools let Claude access live data by orchestrating external API calls between requests.",
+ wh:"Claude's training data has a cutoff. Tools bridge the gap. Claude decides it needs external data, requests it, your server fetches it.",
+ wy:"Without tools Claude cannot tell you today's weather, stock prices, or anything post-training.",
+ pts:null,tp:null,cd:null,
+ st:["User asks a question requiring live data","Claude decides it needs external info and requests it","Your server fetches from external source (API, DB, etc.)","You send follow-up request to Claude with retrieved data","Claude generates final response using original prompt + fresh data"]},
+
+{id:18,cat:"tools",ic:"&#x1F3D7;",col:"linear-gradient(90deg,#a06af7,#f76a6a)",ti:"Tool Functions & Schemas",
+ pv:"Python functions + JSON schemas = the two-part contract Claude uses to call your code.",
+ tgs:[{t:"tools",s:"p"},{t:"json-schema",s:""}],
+ tl:"Tool = Python function Claude can call. Schema = JSON spec that tells Claude what the function does and what args it takes.",
+ wh:"You write the Python function and a JSON schema describing it. Claude reads the schema and sends a tool_use block when it wants to call it.",
+ wy:"Claude cannot see your code, only the schema. A detailed schema means Claude knows exactly when and how to use your tool.",
+ pts:["Use descriptive function names AND argument names","Validate inputs, raise errors with meaningful messages","Errors are visible to Claude &rarr; it can retry with corrections","Trick: paste function into Claude.ai, ask for JSON schema"],
+ tp:"<strong>Schema requires:</strong> name, description (3-4 sentences), input_schema with argument types and descriptions.",
+ cd:"def get_current_datetime(date_format=\"%Y%m%d %H:%M:%S\"):\n  if not date_format:\n    raise ValueError(\"date_format cannot be empty\")\n  return datetime.now().strftime(date_format)\n\nschema = ToolParam({\n  \"name\": \"get_current_datetime\",\n  \"description\": \"Returns current date/time...\",\n  \"input_schema\": {\"type\": \"object\", \"properties\": {...}}\n})",
+ st:null},
+
+{id:19,cat:"tools",ic:"&#x1F4E8;",col:"linear-gradient(90deg,#f7c26a,#6af7c2)",ti:"Sending Tool Results",
+ pv:"Execute the function Claude requested, pack results into a tool_result block.",
+ tgs:[{t:"tools",s:"y"},{t:"protocol",s:""}],
+ tl:"Claude asks for a tool call. You run it. Send back the result as a user message with type tool_result. The tool_use_id links request to result.",
+ wh:"After Claude sends a tool_use block, you execute the function and return a tool_result block as a new user message.",
+ wy:"The tool_use_id is critical when Claude makes multiple parallel tool calls. Without it Claude cannot match results to the right requests.",
+ pts:["tool_result block: type, tool_use_id, content (as string), is_error","Content = JSON-encoded output of your function","Goes in a USER message, not assistant message","Must include original tool schemas in follow-up request"],
+ tp:"<strong>Error handling:</strong> If your function crashes, set is_error=True and put the error message in content. Claude sees it and can retry.",
+ cd:"tool_result = {\n  \"type\": \"tool_result\",\n  \"tool_use_id\": original_tool_use_id,\n  \"content\": json.dumps(result),\n  \"is_error\": False\n}\n\nmessages.append({\n  \"role\": \"user\",\n  \"content\": [tool_result]\n})",
+ st:null},
+
+{id:20,cat:"tools",ic:"&#x1F504;",col:"linear-gradient(90deg,#6ab0f7,#a06af7)",ti:"Multi-Turn Tool Conversations",
+ pv:"Claude can chain tool calls. Use a while loop and check stop_reason each time.",
+ tgs:[{t:"tools",s:"p"},{t:"agentic",s:""}],
+ tl:"While loop: call Claude, if stop_reason is tool_use then execute tools and loop again. Break when stop_reason is end_turn.",
+ wh:"Sometimes answering one question needs multiple tool calls. A while loop handles this by checking stop_reason after every Claude response.",
+ wy:"You cannot predict how many tools a query will need. The loop keeps going until Claude has all data and gives a final answer.",
+ pts:["stop_reason = 'tool_use' &rarr; Claude wants a tool","stop_reason = 'end_turn' &rarr; Claude is done, break","run_tools() extracts all tool_use blocks, executes each","Tool results appended as user message, loop continues"],
+ tp:"<strong>Example chain:</strong> 'What day is 103 days from today?' &rarr; Claude calls get_current_datetime &rarr; calls add_duration &rarr; Claude answers.",
+ cd:"def run_conversation(messages):\n  while True:\n    response = chat(messages)\n    messages.append(response)\n    \n    if response.stop_reason != \"tool_use\":\n      break\n    \n    tool_results = run_tools(response)\n    messages.append({\n      \"role\": \"user\",\n      \"content\": tool_results\n    })\n  return response",
+ st:null},
+
+{id:21,cat:"tools",ic:"&#x26A1;",col:"linear-gradient(90deg,#f76a6a,#6af7c2)",ti:"The Batch Tool",
+ pv:"Force parallel tool execution by giving Claude a call-multiple-tools-at-once wrapper.",
+ tgs:[{t:"performance",s:"r"},{t:"tools",s:""}],
+ tl:"Claude rarely calls multiple tools in one turn. A batch tool wrapper tricks it into parallel execution, saving round-trips.",
+ wh:"A batch tool takes a list of tool invocations. Instead of calling tools one by one, it calls the batch tool once with all desired calls bundled.",
+ wy:"Each tool call round-trip takes time. Parallel execution can cut 4 sequential calls to 1, dramatically reducing latency.",
+ pts:["Create a batch_tool schema accepting an invocations array","run_batch() iterates through invocations, calls run_tool() for each","Returns array of results in a single response","Tricks Claude into parallel execution at the abstraction level"],
+ tp:"<strong>Why needed:</strong> Claude CAN send multiple tool_use blocks in one message but rarely does. The batch tool provides an explicit parallel interface.",
+ cd:null,st:null},
+
+{id:22,cat:"tools",ic:"&#x1F3AF;",col:"linear-gradient(90deg,#a06af7,#f7c26a)",ti:"Tools for Structured Data",
+ pv:"Force Claude to call a tool that matches your JSON schema. More reliable than pre-fill.",
+ tgs:[{t:"tools",s:"p"},{t:"json",s:""}],
+ tl:"Define your desired JSON structure as a tool schema. Use tool_choice to force Claude to call it. Extract from response.content[0].input.",
+ wh:"Instead of pre-fill and stop sequences, define a tool whose input_schema IS your desired JSON structure. Claude fills in the args.",
+ wy:"Tool-based extraction is more reliable than text manipulation, though more complex to set up.",
+ pts:["tool_choice = {type: tool, name: your_tool} &rarr; forces the call","Extract from: response.content[0].input (already parsed JSON)","No stop sequences or string manipulation needed","More complex setup but more reliable output"],
+ tp:"<strong>When to use:</strong> Pre-fill for quick extractions. Tool schema for production systems where reliability matters.",
+ cd:null,st:null},
+
+{id:23,cat:"tools",ic:"&#x1F52C;",col:"linear-gradient(90deg,#6af7c2,#f76a6a)",ti:"Built-in Tools",
+ pv:"Text Editor, Web Search. Built-in tools that need no custom implementation.",
+ tgs:[{t:"tools",s:"g"},{t:"built-in",s:""}],
+ tl:"Web Search: add type web_search_20250305 to tools. Text Editor: send a schema stub, Claude expands it. Both need no custom functions.",
+ wh:"Anthropic provides built-in tools Claude already knows how to use. For Web Search Claude handles everything. For Text Editor you implement the file operations.",
+ wy:"Web Search gives Claude live web data. Text Editor lets Claude act as a software engineer reading, editing, and creating files.",
+ pts:["Web Search schema: type web_search_20250305, name web_search","max_uses: limits total searches per request","allowed_domains: restrict to specific sites","Text Editor: you implement file operations when Claude requests them"],
+ tp:"<strong>Web Search response</strong> includes: text blocks, tool_use blocks (queries), web_search_result blocks (pages), and citation blocks.",
+ cd:null,st:null},
+
+{id:24,cat:"tools",ic:"&#x1F50C;",col:"linear-gradient(90deg,#f7c26a,#a06af7)",ti:"Intro to MCP",
+ pv:"Model Context Protocol: offload tool schema writing to server maintainers.",
+ tgs:[{t:"mcp",s:"y"},{t:"protocol",s:""}],
+ tl:"MCP = a standard way for Claude to connect to pre-built tool servers. You skip writing schemas and functions.",
+ wh:"MCP is a communication protocol. An MCP server wraps an external service with ready-to-use tools. Your app connects via an MCP client.",
+ wy:"Building a GitHub assistant means writing schemas for 20+ endpoints. With an official MCP server, you just connect and all the tools are already there.",
+ pts:["MCP server = contains tools, resources, and prompts","MCP client = your app's connection to the MCP server","Tools still work the same, MCP handles WHO defines them","Anyone can build an MCP server (AWS, Anthropic, community)"],
+ tp:"<strong>Analogy:</strong> MCP is like npm. Instead of writing every utility from scratch, you import a package someone already built.",
+ cd:null,st:null},
+
+{id:25,cat:"tools",ic:"&#x1F5A5;",col:"linear-gradient(90deg,#6ab0f7,#6af7c2)",ti:"MCP Deep Dive",
+ pv:"Tools, Resources, Prompts. The three things an MCP server exposes.",
+ tgs:[{t:"mcp",s:"g"},{t:"architecture",s:""}],
+ tl:"MCP exposes 3 things: Tools (Claude calls reactively), Resources (proactive data), Prompts (pre-built slash commands). Python SDK uses decorators.",
+ wh:"An MCP server has three components: Tools Claude decides to call, Resources exposing readable data via URIs, and Prompts for reusable templates.",
+ wy:"Resources make documents available without a tool call. Prompts give users high-quality pre-tested interaction patterns via slash commands.",
+ pts:["@mcp.tool &rarr; function Claude can call when needed","@mcp.resource('docs://path') &rarr; data accessible by URI","@mcp.prompt &rarr; reusable prompt template with parameters","Python SDK auto-generates JSON schemas from function signatures"],
+ tp:"<strong>Resources vs Tools:</strong> Resources = proactive data. Tools = reactive actions when Claude decides to call them.",
+ cd:"@mcp.tool(name=\"read_doc\", description=\"Reads a document\")\ndef read_doc_contents(\n    doc_id: str = Field(description=\"ID of doc\")\n):\n  if doc_id not in docs:\n    raise ValueError(f\"Doc {doc_id} not found\")\n  return docs[doc_id]",
+ st:null},
+
+{id:26,cat:"advanced",ic:"&#x1F4DA;",col:"linear-gradient(90deg,#f76a6a,#6ab0f7)",ti:"Extended Thinking",
+ pv:"Let Claude reason before answering. More accurate, more expensive, more latency.",
+ tgs:[{t:"reasoning",s:"r"},{t:"accuracy",s:""}],
+ tl:"Extended thinking = Claude's scratchpad before answering. Enable after prompt optimization fails. Min 1024 thinking tokens.",
+ wh:"Extended thinking adds a visible reasoning phase. Claude reasons in a thinking block, then produces the answer in a text block.",
+ wy:"For complex reasoning tasks (math, logic, planning), the thinking phase dramatically improves accuracy.",
+ pts:["Enable: thinking type enabled, budget_tokens 1024","max_tokens must be greater than thinking_budget","Charged for thinking tokens too","Redacted thinking blocks = encrypted safety-flagged reasoning"],
+ tp:"<strong>When to use:</strong> Only enable after prompt engineering has not solved your accuracy problem. It is expensive.",
+ cd:"response = client.messages.create(\n  model=model,\n  max_tokens=5000,\n  thinking={\n    \"type\": \"enabled\",\n    \"budget_tokens\": 4000\n  },\n  messages=messages\n)\n# Response has: thinking block + text block",
+ st:null},
+
+{id:27,cat:"advanced",ic:"&#x1F5BC;",col:"linear-gradient(90deg,#a06af7,#6af7c2)",ti:"Image & PDF Support",
+ pv:"Base64-encode images or PDFs, add them as content blocks in messages.",
+ tgs:[{t:"multimodal",s:"p"},{t:"vision",s:""}],
+ tl:"Images and PDFs are content blocks with type image or type document. Base64-encode the data. Max 100 images per request.",
+ wh:"Claude can analyze images and PDFs directly. You include them as special content blocks in user messages alongside text.",
+ wy:"Claude's vision enables automated workflows that previously needed human eyes. Document extraction, chart analysis, QA screenshots.",
+ pts:["Image block: type image, source with base64 data","PDF block: type document, media_type application/pdf","Images charged by pixel dimensions","Accuracy depends almost entirely on prompt quality"],
+ tp:"<strong>Key insight:</strong> Vague prompts give vague image analysis. Use step-by-step instructions and examples for accurate results.",
+ cd:null,st:null},
+
+{id:28,cat:"advanced",ic:"&#x1F4BE;",col:"linear-gradient(90deg,#6af7c2,#f7c26a)",ti:"Prompt Caching",
+ pv:"Cache repeated content (system prompts, tool schemas) to slash latency and cost.",
+ tgs:[{t:"performance",s:"g"},{t:"cost",s:""}],
+ tl:"Add cache_control type ephemeral to any content block. Cached for 1 hour. Need 1024+ tokens. Max 4 breakpoints per request.",
+ wh:"When follow-up requests contain identical content (same system prompt, same tools), caching stores that work and reuses it.",
+ wy:"Large system prompts and tool schemas are read on EVERY request. With caching you pay the compute cost once per hour instead of per request.",
+ pts:["Cache scope = everything up to AND including the cache breakpoint","Process order: tools &rarr; system prompt &rarr; messages","Any change before breakpoint = cache invalidated","Minimum 1024 tokens to be eligible for caching"],
+ tp:"<strong>Best practice:</strong> Always cache your system prompt and tool schemas since they are identical across requests.",
+ cd:"system = [{\n  \"type\": \"text\",\n  \"text\": \"You are a helpful assistant...\",\n  \"cache_control\": {\"type\": \"ephemeral\"}\n}]\n# cache_creation_input_tokens -> first hit\n# cache_read_input_tokens -> subsequent hits",
+ st:null},
+
+{id:29,cat:"advanced",ic:"&#x1F4CE;",col:"linear-gradient(90deg,#f76a6a,#a06af7)",ti:"Files API & Code Execution",
+ pv:"Upload files once, reference by ID forever. Claude runs Python in a Docker sandbox.",
+ tgs:[{t:"files",s:"r"},{t:"code-exec",s:""}],
+ tl:"Files API: upload, get file_id, reference in future requests. Code Execution: Claude writes and runs Python in an isolated container.",
+ wh:"Files API lets you upload a file once and reference it by ID. Code Execution is a built-in tool where Claude runs Python in a sandboxed Docker container.",
+ wy:"Without Files API you would base64-encode the same PDF in every request. With code execution Claude can do data analysis and return downloadable results.",
+ pts:["Files API: upload file &rarr; get metadata with ID &rarr; use ID in requests","Code execution: just include the schema, no implementation needed","Docker containers have NO network access","Claude can generate files inside containers, downloadable via file IDs"],
+ tp:"<strong>Combined workflow:</strong> Upload CSV via Files API &rarr; reference file_id in code execution &rarr; Claude writes pandas code &rarr; returns analysis.",
+ cd:null,st:null},
+
+{id:30,cat:"rag",ic:"&#x1F4D6;",col:"linear-gradient(90deg,#6af7c2,#6ab0f7)",ti:"Intro to RAG",
+ pv:"Query 1000-page documents without hitting token limits. Chunk, Embed, Retrieve, Respond.",
+ tgs:[{t:"rag",s:"g"},{t:"retrieval",s:""}],
+ tl:"RAG = break big docs into chunks, find relevant ones per query, inject only those into the prompt. Scales to any size.",
+ wh:"RAG solves the too-large-for-context problem. Instead of sending a 500-page document, you find the most relevant 3-5 chunks.",
+ wy:"Token limits are hard caps. Very long prompts reduce quality. RAG keeps prompts focused and costs low.",
+ pts:["Direct approach: whole doc in prompt &rarr; token limits, worse quality","RAG: chunk &rarr; embed &rarr; search &rarr; inject relevant chunks only","Tradeoff: more complexity, needs preprocessing and search","Chunks may lose context (fixed with contextual retrieval)"],
+ tp:"<strong>Analogy:</strong> RAG is like having a giant library but using the index instead of reading every book.",
+ cd:null,st:null},
+
+{id:31,cat:"rag",ic:"&#x2702;",col:"linear-gradient(90deg,#f7c26a,#f76a6a)",ti:"Text Chunking Strategies",
+ pv:"Size-based (with overlap), structure-based (headers), or semantic (NLP). Each has tradeoffs.",
+ tgs:[{t:"rag",s:"y"},{t:"chunking",s:""}],
+ tl:"3 strategies: equal-size chunks with overlap, structure-based on headers/sections, or semantic grouping with NLP.",
+ wh:"Chunking is how you split a document into pieces. Poor chunking = retrieving irrelevant chunks. Good chunking = finding the right context.",
+ wy:"If you chunk mid-sentence the chunk loses meaning. If chunks are too large retrieval precision drops.",
+ pts:["Size-based: equal character/word chunks. Add overlap to preserve context.","Structure-based: split on markdown headers, paragraphs, sections","Semantic: NLP groups related sentences, most complex and accurate","Chunk by character = most reliable fallback for any document type"],
+ tp:"<strong>Start with structure-based</strong> if your docs have consistent formatting. Fall back to size-based with overlap otherwise.",
+ cd:null,st:null},
+
+{id:32,cat:"rag",ic:"&#x1F522;",col:"linear-gradient(90deg,#a06af7,#6af7c2)",ti:"Text Embeddings",
+ pv:"Numbers that represent meaning. Semantic search finds relevant chunks without keyword matching.",
+ tgs:[{t:"rag",s:"p"},{t:"vectors",s:""}],
+ tl:"Embeddings = lists of floats (-1 to 1) that encode text meaning. Similar meanings = close vectors. Use Voyage AI (Anthropic-recommended).",
+ wh:"An embedding model converts text into a long list of numbers. Similar meanings produce similar numbers, enabling semantic search.",
+ wy:"Keyword search fails when the query uses different words from the document. Semantic search understands synonyms and intent.",
+ pts:["Embedding model &rarr; text in, float array out","Each float scores some quality of the text","Similar meaning &rarr; similar vectors &rarr; low cosine distance","Anthropic recommends Voyage AI for embeddings"],
+ tp:"<strong>Key insight:</strong> You embed both chunks and user query using the SAME model, then measure similarity between them.",
+ cd:null,st:null},
+
+{id:33,cat:"rag",ic:"&#x1F50D;",col:"linear-gradient(90deg,#6ab0f7,#f7c26a)",ti:"Full RAG Flow",
+ pv:"7-step pipeline: chunk, embed, normalize, store, query, search, prompt.",
+ tgs:[{t:"rag",s:"g"},{t:"pipeline",s:""}],
+ tl:"Pre-process once (chunk, embed, store). At query time: embed query, cosine search, inject top results into prompt.",
+ wh:"The full RAG flow has an offline preprocessing phase and a real-time query phase. Pre-processing runs once.",
+ wy:"Pre-processing is expensive. Doing it once and storing vectors means runtime queries are just a fast vector similarity search.",
+ pts:null,tp:"<strong>Cosine similarity:</strong> Returns -1 to 1. Closer to 1 = more similar. Cosine distance = 1 minus similarity (closer to 0 = more similar).",cd:null,
+ st:["Split source documents into text chunks","Generate embedding vectors for each chunk","Normalize vectors (handled automatically by embedding APIs)","Store embeddings in a vector database with original text as metadata","Convert user query into an embedding using the SAME model","Find top-k most similar stored embeddings via cosine similarity","Inject retrieved chunks + user question into Claude prompt"]},
+
+{id:34,cat:"rag",ic:"&#x1F9EC;",col:"linear-gradient(90deg,#f76a6a,#6af7c2)",ti:"Hybrid Search & Reranking",
+ pv:"Combine vector search + BM25 lexical search, then rerank with an LLM.",
+ tgs:[{t:"rag",s:"r"},{t:"search",s:""}],
+ tl:"Semantic search alone misses exact term matches. BM25 catches them. Combine both with Reciprocal Rank Fusion, then rerank.",
+ wh:"Hybrid RAG runs semantic search AND BM25 lexical search in parallel, merges with Reciprocal Rank Fusion, and optionally reranks with LLM.",
+ wy:"Semantic search can miss chunks with rare exact terms. BM25 prioritizes rare terms. Together they cover both failure modes.",
+ pts:["BM25 = scores chunks by rare term frequency in query","RRF score = sum of 1/(rank+1) across both methods","Reranking: pass candidate docs to Claude, ask to rank by relevance","Reranking adds latency but catches nuanced query intent"],
+ tp:"<strong>RRF example:</strong> A doc ranked #1 in vector search and #2 in BM25 beats docs that only rank well in one system.",
+ cd:null,st:null},
+
+{id:35,cat:"rag",ic:"&#x1F9E9;",col:"linear-gradient(90deg,#6af7c2,#a06af7)",ti:"Contextual Retrieval",
+ pv:"Chunks lose context when split. Add AI-generated context before embedding.",
+ tgs:[{t:"rag",s:"g"},{t:"advanced",s:""}],
+ tl:"Before embedding each chunk, ask Claude to write a 1-2 sentence explanation of how the chunk fits the larger document. Prepend that context, then embed.",
+ wh:"Contextual Retrieval adds an LLM-generated situating description to each chunk before indexing.",
+ wy:"A bare chunk might say 'revenue declined 15%'. A contextualized chunk says 'From Q3 2024 earnings: revenue declined 15% due to product delays'. Much better retrieval.",
+ pts:["For each chunk: send chunk + source doc to Claude","Claude generates: This section covers X in the context of Y","Prepend generated context to original chunk","Store contextualized chunk in both vector and BM25 indexes"],
+ tp:"<strong>Large documents:</strong> Include first 3 chunks (summary) + chunks immediately before the target. Skip the middle.",
+ cd:null,st:null},
+
+{id:36,cat:"agents",ic:"&#x1F916;",col:"linear-gradient(90deg,#a06af7,#f76a6a)",ti:"Workflows vs Agents",
+ pv:"Know the steps? Use a workflow. Steps unclear? Use an agent. Reliability over flexibility.",
+ tgs:[{t:"agents",s:"p"},{t:"architecture",s:""}],
+ tl:"Workflows = predetermined steps, higher reliability, easier testing. Agents = dynamic planning with tools, more flexible, harder to test.",
+ wh:"Workflows are scripted: you define every step. Agents are autonomous: Claude decides what steps to take using available tools.",
+ wy:"Users want things to work 100% of the time. Workflows are more predictable. Only use agents when requirements are too unpredictable to script.",
+ pts:["Workflow patterns: chaining, parallelization, routing, evaluator-optimizer","Agents use tools dynamically, execution path unpredictable","Workflows: easier to test, higher success rates","Agents: flexible for varied tasks, lower completion rates"],
+ tp:"<strong>Rule:</strong> Solve the problem reliably with a workflow first. Only build an agent when a workflow cannot handle the variation.",
+ cd:null,st:null},
+
+{id:37,cat:"agents",ic:"&#x1F500;",col:"linear-gradient(90deg,#6af7c2,#f7c26a)",ti:"Workflow Patterns",
+ pv:"Chaining, parallelization, routing, evaluator-optimizer. 4 patterns to know.",
+ tgs:[{t:"workflows",s:"g"},{t:"patterns",s:""}],
+ tl:"4 patterns: Chain tasks sequentially. Parallelize independent subtasks. Route by content type. Evaluate-optimize with a producer-evaluator loop.",
+ wh:"Four common workflow patterns solve different problems. Each pattern solves a specific failure mode in production systems.",
+ wy:"Chaining beats complex single prompts. Parallelization beats bottlenecks. Routing beats generic responses. Evaluator-optimizer beats first-draft quality.",
+ pts:["Chaining: sequential steps when one prompt cannot handle all constraints","Parallelization: separate material analysis &rarr; aggregation step","Routing: classify input first &rarr; specialized prompt for each category","Evaluator-optimizer: producer generates &rarr; evaluator scores &rarr; loop until accepted"],
+ tp:"<strong>Routing example:</strong> Topic = Python functions &rarr; categorize as educational &rarr; use educational prompt template with definitions.",
+ cd:null,st:null},
+
+{id:38,cat:"agents",ic:"&#x1F5A5;",col:"linear-gradient(90deg,#6ab0f7,#f76a6a)",ti:"Claude Code & Computer Use",
+ pv:"Claude Code = AI coding partner in your terminal. Computer Use = Claude controls a computer visually.",
+ tgs:[{t:"claude-code",s:"r"},{t:"agents",s:""}],
+ tl:"Claude Code: terminal AI with file/bash/web tools and MCP support. Computer Use: Claude takes screenshots and clicks through a Docker container.",
+ wh:"Claude Code is a terminal-based coding assistant. Run claude, it reads your codebase, and you can have it write features, fix bugs, and commit.",
+ wy:"Claude Code init command creates a CLAUDE.md memory file included automatically in every request, making it a genuine engineering collaborator.",
+ pts:["Claude Code: run claude &rarr; read README &rarr; run init &rarr; get CLAUDE.md","Best workflow: analyze files &rarr; plan &rarr; implement (3 steps)","Parallelize with git worktrees to run multiple instances simultaneously","Computer Use: Docker container handles actual mouse and keyboard execution"],
+ tp:"<strong>Pro move:</strong> Use git worktrees to run 10 Claude Code instances in parallel on different features. One developer, multiple virtual engineers.",
+ cd:null,st:null}
+];
+
+var cFilter='all', activeId=null, visited={};
+
+var CATS={
+  basics:   '01 / API Basics',
+  prompting:'02 / Prompting &amp; Evals',
+  tools:    '03 / Tools &amp; MCP',
+  advanced: '04 / Advanced Features',
+  rag:      '05 / Retrieval Augmented Generation',
+  agents:   '06 / Agents &amp; Workflows'
+};
+
+function init(){
+  var mc=document.getElementById('mc');
+  Object.keys(CATS).forEach(function(cat){
+    var lbl=document.createElement('div');
+    lbl.className='slbl'; lbl.dataset.cat=cat; lbl.innerHTML=CATS[cat];
+    mc.appendChild(lbl);
+    var grid=document.createElement('div');
+    grid.className='cg'; grid.dataset.cat=cat;
+    mc.appendChild(grid);
+    var panel=document.createElement('div');
+    panel.className='dp'; panel.id='dp-'+cat;
+    mc.appendChild(panel);
+    D.filter(function(t){return t.cat===cat;}).forEach(function(t){
+      grid.appendChild(mkCard(t));
+    });
+  });
+}
+
+function mkCard(t){
+  var c=document.createElement('div');
+  c.className='card'; c.id='c-'+t.id;
+  c.dataset.id=t.id; c.dataset.cat=t.cat;
+  c.dataset.s=(t.ti+' '+t.pv+' '+t.tgs.map(function(x){return x.t;}).join(' ')).toLowerCase();
+  c.innerHTML='<div class="cab" style="background:'+t.col+'"></div>'+
+    '<div class="ch"><div class="ci2">'+t.ic+'</div>'+
+    '<div><div class="ct">'+t.ti+'</div><div class="cp">'+t.pv+'</div></div></div>'+
+    '<div class="ctags">'+t.tgs.map(function(x){return '<span class="tag '+x.s+'">'+x.t+'</span>';}).join('')+'</div>'+
+    '<div class="hint">[ EXPAND ]</div>';
+  c.addEventListener('click',function(){tog(t,c);});
+  return c;
+}
+
+function tog(t,card){
+  var panel=document.getElementById('dp-'+t.cat);
+  var isActive=activeId===t.id;
+  document.querySelectorAll('.dp').forEach(function(p){p.classList.remove('show');});
+  document.querySelectorAll('.card').forEach(function(c){c.classList.remove('on');});
+  if(isActive){activeId=null;return;}
+  activeId=t.id; card.classList.add('on');
+  visited[t.id]=true; card.classList.add('vis');
+  panel.classList.add('show');
+  panel.innerHTML=mkDetail(t);
+  panel.querySelector('.xbtn').addEventListener('click',function(e){
+    e.stopPropagation();
+    panel.classList.remove('show'); card.classList.remove('on'); activeId=null;
+  });
+  setTimeout(function(){panel.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+  updStats();
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function mkDetail(t){
+  var h='<div class="dh"><div class="dtitle">'+t.ic+' '+t.ti+'</div><button class="xbtn">&#x2715; close</button></div>';
+  if(t.tl) h+='<div class="tip" style="margin-bottom:20px"><strong>TL;DR &mdash;</strong> '+t.tl+'</div>';
+  h+='<div class="db"><div>';
+  if(t.wh) h+='<div class="dst">What it is</div><p class="dtxt">'+t.wh+'</p>';
+  if(t.st){
+    h+='<div class="dst" style="margin-top:16px">How it works</div><div class="fsteps">';
+    t.st.forEach(function(s,i){h+='<div class="fstep"><div class="snum">'+(i+1)+'</div><div class="stxt">'+s+'</div></div>';});
+    h+='</div>';
+  }
+  if(t.cd) h+='<div class="dst" style="margin-top:16px">Code example</div><div class="cblk">'+esc(t.cd)+'</div>';
+  h+='</div><div>';
+  if(t.wy) h+='<div class="dst">Why it matters</div><p class="dtxt">'+t.wy+'</p>';
+  if(t.pts){
+    h+='<div class="dst" style="margin-top:16px">Key points</div><ul class="dlist">';
+    t.pts.forEach(function(p){h+='<li>'+p+'</li>';});
+    h+='</ul>';
+  }
+  if(t.tp) h+='<div class="tip" style="margin-top:16px">'+t.tp+'</div>';
+  h+='</div></div>';
+  return h;
+}
+
+function fc2(){
+  var q=document.getElementById('search').value.toLowerCase().trim();
+  var n=0;
+  document.querySelectorAll('.card').forEach(function(c){
+    var ok=(cFilter==='all'||c.dataset.cat===cFilter)&&(!q||c.dataset.s.indexOf(q)!==-1);
+    c.style.display=ok?'':'none';
+    if(ok) n++;
+  });
+  document.querySelectorAll('.cg').forEach(function(g){
+    var has=false;
+    g.querySelectorAll('.card').forEach(function(c){if(c.style.display!=='none') has=true;});
+    g.style.display=has?'':'none';
+    g.previousElementSibling.style.display=has?'':'none';
+  });
+  document.getElementById('nr').style.display=n===0?'block':'none';
+  document.getElementById('fc').textContent=n+' visible';
+}
+
+function sf(cat,btn){
+  cFilter=cat;
+  document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  document.querySelectorAll('.dp').forEach(function(p){p.classList.remove('show');});
+  document.querySelectorAll('.card').forEach(function(c){c.classList.remove('on');});
+  activeId=null; fc2();
+}
+
+function updStats(){
+  var n=Object.keys(visited).length;
+  document.getElementById('vc').textContent=n+' explored';
+  var pct=Math.round(n/D.length*100);
+  document.getElementById('pp').textContent=pct+'%';
+  document.getElementById('pf').style.width=pct+'%';
+}
+
+init();
+</script>
+</body>
+</html>
